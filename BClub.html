@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Badminton Score Tracker</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+    button { margin: 10px; padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Badminton Score Tracker</h1>
+  <div>
+    <h2>Player A: <span id="scoreA">0</span></h2>
+    <h2>Player B: <span id="scoreB">0</span></h2>
+    <button onclick="addPoint('A')">+1 Player A</button>
+    <button onclick="addPoint('B')">+1 Player B</button>
+    <button onclick="resetScores()">Reset</button>
+  </div>
+
+  <script>
+    let scoreA = 0;
+    let scoreB = 0;
+
+    function addPoint(player) {
+      if (player === 'A') scoreA++;
+      else scoreB++;
+      updateScores();
+    }
+
+    function resetScores() {
+      scoreA = 0;
+      scoreB = 0;
+      updateScores();
+    }
+
+    function updateScores() {
+      document.getElementById('scoreA').textContent = scoreA;
+      document.getElementById('scoreB').textContent = scoreB;
+    }
+  </script>
+</body>
+</html>
