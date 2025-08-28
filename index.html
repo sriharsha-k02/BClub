@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Badminton Tournament Tracker</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <h1>Badminton Round Robin + Playoffs</h1>
-  <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+  <!--button onclick="toggleDarkMode()">Toggle Dark Mode</button-->
 
   <table id="matchTable">
     <thead>
@@ -69,19 +70,22 @@
       }
     }
 
-    const matchTable = document.getElementById('matches');
-    matches.forEach((match, index) => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td class="game-col">${index + 1}</td>
-        <td>${match.teamA}</td>
-        <td>${match.teamB}</td>
-        <td><input type="number" min="0" id="scoreA-${index}" oninput="updateMatch(${index})" /></td>
-        <td><input type="number" min="0" id="scoreB-${index}" oninput="updateMatch(${index})" /></td>
-        <td id="winner-${index}">—</td>
-      `;
-      matchTable.appendChild(row);
-    });
+    function renderMatches() {
+      const matchTable = document.getElementById('matches');
+      matchTable.innerHTML = '';
+      matches.forEach((match, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="game-col">${index + 1}</td>
+          <td>${match.teamA}</td>
+          <td>${match.teamB}</td>
+          <td><input type="number" min="0" id="scoreA-${index}" oninput="updateMatch(${index})" /></td>
+          <td><input type="number" min="0" id="scoreB-${index}" oninput="updateMatch(${index})" /></td>
+          <td id="winner-${index}">—</td>
+        `;
+        matchTable.appendChild(row);
+      });
+    }
 
     function updateMatch(index) {
       const scoreA = parseInt(document.getElementById(`scoreA-${index}`).value) || 0;
@@ -134,96 +138,96 @@
         rankingTable.appendChild(row);
       });
 
-      renderPlayoffs(sorted.map(([team]) => team));
+      const topTeams = sorted.map(([team]) => team);
+      if (topTeams.length >= 4) {
+        document.getElementById('pTeamA-0').textContent = topTeams[0];
+        document.getElementById('pTeamB-0').textContent = topTeams[1];
+        document.getElementById('pTeamA-1').textContent = topTeams[2];
+        document.getElementById('pTeamB-1').textContent = topTeams[3];
+      }
     }
 
     function renderPlayoffs() {
-  const playoffMatches = [
-    { name: 'Qualifier 1', teamA: '', teamB: '' },
-    { name: 'Eliminator', teamA: '', teamB: '' },
-    { name: 'Qualifier 2', teamA: '', teamB: '' },
-    { name: 'Final', teamA: '', teamB: '' }
-  ];
+      const playoffMatches = [
+        { name: 'Qualifier 1', teamA: '', teamB: '' },
+        { name: 'Eliminator', teamA: '', teamB: '' },
+        { name: 'Qualifier 2', teamA: '', teamB: '' },
+        { name: 'Final', teamA: '', teamB: '' }
+      ];
 
-  const playoffTable = document.getElementById('playoffMatches');
-  playoffTable.innerHTML = '';
-  playoffMatches.forEach((match, index) => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td class="game-col">${index + 1}</td>
-      <td>${match.name}</td>
-      <td id="pTeamA-${index}">${match.teamA}</td>
-      <td id="pTeamB-${index}">${match.teamB}</td>
-      <td><input type="number" min="0" id="pScoreA-${index}" oninput="updatePlayoff(${index})" /></td>
-      <td><input type="number" min="0" id="pScoreB-${index}" oninput="updatePlayoff(${index})" /></td>
-      <td id="pWinner-${index}">—</td>
-    `;
-    playoffTable.appendChild(row);
-  });
+      const playoffTable = document.getElementById('playoffMatches');
+      playoffTable.innerHTML = '';
+      playoffMatches.forEach((match, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="game-col">${index + 1}</td>
+          <td>${match.name}</td>
+          <td id="pTeamA-${index}">${match.teamA}</td>
+          <td id="pTeamB-${index}">${match.teamB}</td>
+          <td><input type="number" min="0" id="pScoreA-${index}" oninput="updatePlayoff(${index})" /></td>
+          <td><input type="number" min="0" id="pScoreB-${index}" oninput="updatePlayoff(${index})" /></td>
+          <td id="pWinner-${index}">—</td>
+        `;
+        playoffTable.appendChild(row);
+      });
 
-  document.getElementById('playoffs').style.display = 'block';
-}
-
-    function updateRankings() {
-  const results = {};
-  teams.forEach(team => results[team] = { wins: 0, points: 0 });
-
-  matches.forEach((match, index) => {
-    const scoreA = parseInt(document.getElementById(`scoreA-${index}`).value) || 0;
-    const scoreB = parseInt(document.getElementById(`scoreB-${index}`).value) || 0;
-
-    results[match.teamA].points += scoreA;
-    results[match.teamB].points += scoreB;
-
-    if (scoreA > scoreB) {
-      results[match.teamA].wins += 1;
-    } else if (scoreB > scoreA) {
-      results[match.teamB].wins += 1;
+      document.getElementById('playoffs').style.display = 'block';
     }
-  });
 
-  const sorted = Object.entries(results).sort((a, b) => {
-    if (b[1].wins !== a[1].wins) return b[1].wins - a[1].wins;
-    return b[1].points - a[1].points;
-  });
+        function updatePlayoff(index) {
+      const scoreA = parseInt(document.getElementById(`pScoreA-${index}`).value) || 0;
+      const scoreB = parseInt(document.getElementById(`pScoreB-${index}`).value) || 0;
+      const teamA = document.getElementById(`pTeamA-${index}`).textContent;
+      const teamB = document.getElementById(`pTeamB-${index}`).textContent;
+      const winnerCell = document.getElementById(`pWinner-${index}`);
 
-  const rankingTable = document.getElementById('rankings');
-  rankingTable.innerHTML = '';
-  sorted.forEach(([team, data]) => {
-    const row = document.createElement('tr');
-    row.innerHTML = `<td>${team}</td><td>${data.wins}</td><td>${data.points}</td>`;
-    rankingTable.appendChild(row);
-  });
+      winnerCell.className = '';
+      let winner = '';
+      let loser = '';
 
-  // Show playoff section if not already visible
-  document.getElementById('playoffs').style.display = 'block';
+      if (scoreA > scoreB) {
+        winner = teamA;
+        loser = teamB;
+        winnerCell.textContent = winner;
+        winnerCell.classList.add('winner');
+      } else if (scoreB > scoreA) {
+        winner = teamB;
+        loser = teamA;
+        winnerCell.textContent = winner;
+        winnerCell.classList.add('winner');
+      } else {
+        winner = 'Draw';
+        loser = 'Draw';
+        winnerCell.textContent = 'Draw';
+        winnerCell.classList.add('draw');
+      }
 
-  // Auto-fill top 4 teams into playoff matches
- // Auto-fill top 4 teams into playoff matches only if not already filled
-const topTeams = sorted.map(([team]) => team);
+      // Playoff logic
+      if (index === 0) {
+        // Qualifier 1 → Final & Qualifier 2
+        document.getElementById('pTeamB-3').textContent = winner; // Final team B
+        document.getElementById('pTeamA-2').textContent = loser;  // Qualifier 2 team A
+      }
 
-if (topTeams.length >= 4) {
-  const q1A = document.getElementById('pTeamA-0');
-  const q1B = document.getElementById('pTeamB-0');
-  const elimA = document.getElementById('pTeamA-1');
-  const elimB = document.getElementById('pTeamB-1');
+      if (index === 1) {
+        // Eliminator → Qualifier 2
+        document.getElementById('pTeamB-2').textContent = winner; // Qualifier 2 team B
+      }
 
-  if (!q1A.textContent || q1A.textContent === '') q1A.textContent = topTeams[0];
-  if (!q1B.textContent || q1B.textContent === '') q1B.textContent = topTeams[1];
-  if (!elimA.textContent || elimA.textContent === '') elimA.textContent = topTeams[2];
-  if (!elimB.textContent || elimB.textContent === '') elimB.textContent = topTeams[3];
-}
-}
+      if (index === 2) {
+        // Qualifier 2 → Final team A
+        document.getElementById('pTeamA-3').textContent = winner; // Final team A
+      }
+    }
 
     function toggleDarkMode() {
       document.body.classList.toggle('dark-mode');
     }
 
     // Initial render
-
-    renderPlayoffs(); // Initial blank setup
-    updateRankings(); // Live updates as scores change
-
+    renderMatches();
+    renderPlayoffs();
+    updateRankings();
   </script>
 </body>
 </html>
