@@ -8,8 +8,7 @@
 <body>
 
 <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
-  <h1 style="margin: 0;">BClub Dabidi Dibidi</h1>
-  <img src="https://media.tenor.com/1fXzKXKZtJMAAAAC/balayya-train-moving-scene.gif" alt="Balakrishna Train Scene" style="height: 80px;">
+  <h1 style="margin: 0;">BClub Friendlies</h1>
 </div>
 
 
@@ -180,51 +179,52 @@
       document.getElementById('playoffs').style.display = 'block';
     }
 
-        function updatePlayoff(index) {
-      const scoreA = parseInt(document.getElementById(`pScoreA-${index}`).value) || 0;
-      const scoreB = parseInt(document.getElementById(`pScoreB-${index}`).value) || 0;
-      const teamA = document.getElementById(`pTeamA-${index}`).textContent;
-      const teamB = document.getElementById(`pTeamB-${index}`).textContent;
-      const winnerCell = document.getElementById(`pWinner-${index}`);
+    function updateRankings() {
+  const results = {};
+  let hasScores = false;
 
-      winnerCell.className = '';
-      let winner = '';
-      let loser = '';
+  teams.forEach(team => results[team] = { wins: 0, points: 0 });
 
-      if (scoreA > scoreB) {
-        winner = teamA;
-        loser = teamB;
-        winnerCell.textContent = winner;
-        winnerCell.classList.add('winner');
-      } else if (scoreB > scoreA) {
-        winner = teamB;
-        loser = teamA;
-        winnerCell.textContent = winner;
-        winnerCell.classList.add('winner');
-      } else {
-        winner = 'Draw';
-        loser = 'Draw';
-        winnerCell.textContent = 'Draw';
-        winnerCell.classList.add('draw');
-      }
+  matches.forEach((match, index) => {
+    const scoreA = parseInt(document.getElementById(`scoreA-${index}`).value);
+    const scoreB = parseInt(document.getElementById(`scoreB-${index}`).value);
 
-      // Playoff logic
-      if (index === 0) {
-        // Qualifier 1 → Final & Qualifier 2
-        document.getElementById('pTeamB-3').textContent = winner; // Final team B
-        document.getElementById('pTeamA-2').textContent = loser;  // Qualifier 2 team A
-      }
-
-      if (index === 1) {
-        // Eliminator → Qualifier 2
-        document.getElementById('pTeamB-2').textContent = winner; // Qualifier 2 team B
-      }
-
-      if (index === 2) {
-        // Qualifier 2 → Final team A
-        document.getElementById('pTeamA-3').textContent = winner; // Final team A
-      }
+    if (!isNaN(scoreA) || !isNaN(scoreB)) {
+      hasScores = true;
     }
+
+    results[match.teamA].points += scoreA || 0;
+    results[match.teamB].points += scoreB || 0;
+
+    if (scoreA > scoreB) {
+      results[match.teamA].wins += 1;
+    } else if (scoreB > scoreA) {
+      results[match.teamB].wins += 1;
+    }
+  });
+
+  const sorted = Object.entries(results).sort((a, b) => {
+    if (b[1].wins !== a[1].wins) return b[1].wins - a[1].wins;
+    return b[1].points - a[1].points;
+  });
+
+  const rankingTable = document.getElementById('rankings');
+  rankingTable.innerHTML = '';
+  sorted.forEach(([team, data]) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${team}</td><td>${data.wins}</td><td>${data.points}</td>`;
+    rankingTable.appendChild(row);
+  });
+
+  // ✅ Only fill playoff teams if scores exist
+  if (hasScores && sorted.length >= 4) {
+    document.getElementById('pTeamA-0').textContent = sorted[0][0]; // Rank 1
+    document.getElementById('pTeamB-0').textContent = sorted[1][0]; // Rank 2
+    document.getElementById('pTeamA-1').textContent = sorted[2][0]; // Rank 3
+    document.getElementById('pTeamB-1').textContent = sorted[3][0]; // Rank 4
+  }
+}
+
 
     function toggleDarkMode() {
       document.body.classList.toggle('dark-mode');
