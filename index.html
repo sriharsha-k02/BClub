@@ -2,18 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Badminton Tournament Tracker</title>
+  <title>Saturday Tournment</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+    <h1 style="margin: 0;">Saturday Tournment</h1>
+    <img src="https://media.tenor.com/1fXzKXKZtJMAAAAC/balayya-train-moving-scene.gif" alt="Balakrishna Train Scene" style="height: 80px;">
+  </div>
+  
+  <div style="display: flex; align-items: right; justify-content: right; gap: 20px;">
+      <button onclick="confirmReset()">Reset Tournament</button>
+  </div>
+  </body>
 
-<div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
-  <h1 style="margin: 0;">BClub Friendlies</h1>
-  <img src="https://media.tenor.com/1fXzKXKZtJMAAAAC/balayya-train-moving-scene.gif" alt="Balakrishna Train Scene" style="height: 80px;">
-</div>
-
-
-  <!--button onclick="toggleDarkMode()">Toggle Dark Mode</button-->
+  
 
   <table id="matchTable">
     <thead>
@@ -110,19 +113,28 @@
         winnerCell.classList.add('draw');
       }
 
+      // Save to localStorage
+      localStorage.setItem(`match-${index}`, JSON.stringify({ scoreA, scoreB }));
+
       updateRankings();
     }
 
     function updateRankings() {
       const results = {};
+      let hasScores = false;
+
       teams.forEach(team => results[team] = { wins: 0, points: 0 });
 
       matches.forEach((match, index) => {
-        const scoreA = parseInt(document.getElementById(`scoreA-${index}`).value) || 0;
-        const scoreB = parseInt(document.getElementById(`scoreB-${index}`).value) || 0;
+        const scoreA = parseInt(document.getElementById(`scoreA-${index}`).value);
+        const scoreB = parseInt(document.getElementById(`scoreB-${index}`).value);
 
-        results[match.teamA].points += scoreA;
-        results[match.teamB].points += scoreB;
+        if (!isNaN(scoreA) || !isNaN(scoreB)) {
+          hasScores = true;
+        }
+
+        results[match.teamA].points += scoreA || 0;
+        results[match.teamB].points += scoreB || 0;
 
         if (scoreA > scoreB) {
           results[match.teamA].wins += 1;
@@ -144,12 +156,11 @@
         rankingTable.appendChild(row);
       });
 
-      const topTeams = sorted.map(([team]) => team);
-      if (topTeams.length >= 4) {
-        document.getElementById('pTeamA-0').textContent = topTeams[0];
-        document.getElementById('pTeamB-0').textContent = topTeams[1];
-        document.getElementById('pTeamA-1').textContent = topTeams[2];
-        document.getElementById('pTeamB-1').textContent = topTeams[3];
+      if (hasScores && sorted.length >= 4) {
+        document.getElementById('pTeamA-0').textContent = sorted[0][0];
+        document.getElementById('pTeamB-0').textContent = sorted[1][0];
+        document.getElementById('pTeamA-1').textContent = sorted[2][0];
+        document.getElementById('pTeamB-1').textContent = sorted[3][0];
       }
     }
 
@@ -180,61 +191,121 @@
       document.getElementById('playoffs').style.display = 'block';
     }
 
-    function updateRankings() {
-  const results = {};
-  let hasScores = false;
+    function updatePlayoff(index) {
+      const scoreA = parseInt(document.getElementById(`pScoreA-${index}`).value) || 0;
+      const scoreB = parseInt(document.getElementById(`pScoreB-${index}`).value) || 0;
+      const teamA = document.getElementById(`pTeamA-${index}`).textContent;
+      const teamB = document.getElementById(`pTeamB-${index}`).textContent;
+      const winnerCell = document.getElementById(`pWinner-${index}`);
 
-  teams.forEach(team => results[team] = { wins: 0, points: 0 });
+      winnerCell.className = '';
+      let winner = '';
+      let loser = '';
 
-  matches.forEach((match, index) => {
-    const scoreA = parseInt(document.getElementById(`scoreA-${index}`).value);
-    const scoreB = parseInt(document.getElementById(`scoreB-${index}`).value);
+      if (scoreA > scoreB) {
+        winner = teamA;
+        loser = teamB;
+        winnerCell.textContent = winner;
+        winnerCell.classList.add('winner');
+      } else if (scoreB > scoreA) {
+        winner = teamB;
+        loser = teamA;
+        winnerCell.textContent = winner;
+        winnerCell.classList.add('winner');
+      } else {
+        winner = 'Draw';
+        loser = 'Draw';
+        winnerCell.textContent = 'Draw';
+        winnerCell.classList.add('draw');
+      }
 
-    if (!isNaN(scoreA) || !isNaN(scoreB)) {
-      hasScores = true;
+      // Save playoff scores to localStorage
+      localStorage.setItem(`playoff-${index}`, JSON.stringify({ scoreA, scoreB }));
+
+      // Playoff progression logic
+      if (index === 0) {
+        document.getElementById('pTeamB-3').textContent = winner; // Final team B
+        document.getElementById('pTeamA-2').textContent = loser;  // Qualifier 2 team A
+      }
+
+      if (index === 1) {
+        document.getElementById('pTeamB-2').textContent = winner; // Qualifier 2 team B
+      }
+
+      if (index === 2) {
+        document.getElementById('pTeamA-3').textContent = winner; // Final team A
+      }
     }
 
-    results[match.teamA].points += scoreA || 0;
-    results[match.teamB].points += scoreB || 0;
-
-    if (scoreA > scoreB) {
-      results[match.teamA].wins += 1;
-    } else if (scoreB > scoreA) {
-      results[match.teamB].wins += 1;
+    function loadSavedScores() {
+      matches.forEach((_, index) => {
+        const saved = localStorage.getItem(`match-${index}`);
+        if (saved) {
+          const { scoreA, scoreB } = JSON.parse(saved);
+          document.getElementById(`scoreA-${index}`).value = scoreA;
+          document.getElementById(`scoreB-${index}`).value = scoreB;
+          updateMatch(index);
+        }
+      });
     }
-  });
 
-  const sorted = Object.entries(results).sort((a, b) => {
-    if (b[1].wins !== a[1].wins) return b[1].wins - a[1].wins;
-    return b[1].points - a[1].points;
-  });
+    function loadSavedPlayoffs() {
+      for (let i = 0; i < 4; i++) {
+        const saved = localStorage.getItem(`playoff-${i}`);
+        if (saved) {
+          const { scoreA, scoreB } = JSON.parse(saved);
+          document.getElementById(`pScoreA-${i}`).value = scoreA;
+          document.getElementById(`pScoreB-${i}`).value = scoreB;
+          updatePlayoff(i);
+        }
+      }
+    }
 
-  const rankingTable = document.getElementById('rankings');
-  rankingTable.innerHTML = '';
-  sorted.forEach(([team, data]) => {
-    const row = document.createElement('tr');
-    row.innerHTML = `<td>${team}</td><td>${data.wins}</td><td>${data.points}</td>`;
-    rankingTable.appendChild(row);
-  });
+    function resetTournament() {
+      // Clear localStorage
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('match-') || key.startsWith('playoff-')) {
+          localStorage.removeItem(key);
+        }
+      });
 
-  // ✅ Only fill playoff teams if scores exist
-  if (hasScores && sorted.length >= 4) {
-    document.getElementById('pTeamA-0').textContent = sorted[0][0]; // Rank 1
-    document.getElementById('pTeamB-0').textContent = sorted[1][0]; // Rank 2
-    document.getElementById('pTeamA-1').textContent = sorted[2][0]; // Rank 3
-    document.getElementById('pTeamB-1').textContent = sorted[3][0]; // Rank 4
-  }
-}
+      // Clear match inputs and winners
+      matches.forEach((_, index) => {
+        document.getElementById(`scoreA-${index}`).value = '';
+        document.getElementById(`scoreB-${index}`).value = '';
+        document.getElementById(`winner-${index}`).textContent = '—';
+        document.getElementById(`winner-${index}`).className = '';
+      });
 
+      // Clear playoff inputs and winners
+      for (let i = 0; i < 4; i++) {
+        document.getElementById(`pScoreA-${i}`).value = '';
+        document.getElementById(`pScoreB-${i}`).value = '';
+        document.getElementById(`pWinner-${i}`).textContent = '—';
+        document.getElementById(`pWinner-${i}`).className = '';
+        document.getElementById(`pTeamA-${i}`).textContent = '';
+        document.getElementById(`pTeamB-${i}`).textContent = '';
+      }
 
-    function toggleDarkMode() {
-      document.body.classList.toggle('dark-mode');
+      // Clear rankings
+      document.getElementById('rankings').innerHTML = '';
+
+      // Recalculate everything clean
+      updateRankings();
+    }
+
+    function confirmReset() {
+      const confirmed = confirm("🚂 Balayya says:\nAre you sure you want to restart this tournament?\nDabidi Dibidi!");
+      if (confirmed) {
+        resetTournament();
+      }
     }
 
     // Initial render
     renderMatches();
     renderPlayoffs();
-    updateRankings();
+    loadSavedScores();
+    loadSavedPlayoffs();
   </script>
 </body>
 </html>
