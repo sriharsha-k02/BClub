@@ -37,7 +37,8 @@
     <thead>
       <tr>
         <th>Team</th>
-        <th>Wins</th>
+        <th>Matches Played</th>
+        <th>Wins</th>        
         <th>Total Points</th>
       </tr>
     </thead>
@@ -123,7 +124,9 @@
       const results = {};
       let hasScores = false;
 
-      teams.forEach(team => results[team] = { wins: 0, points: 0 });
+      teams.forEach(team => {
+      results[team] = { wins: 0, points: 0, played: 0 };
+      });
 
       matches.forEach((match, index) => {
         const scoreA = parseInt(document.getElementById(`scoreA-${index}`).value);
@@ -141,6 +144,13 @@
         } else if (scoreB > scoreA) {
           results[match.teamB].wins += 1;
         }
+
+              if (!isNaN(scoreA) || !isNaN(scoreB)) {
+        hasScores = true;
+        results[match.teamA].played += 1;
+        results[match.teamB].played += 1;
+}
+
       });
 
       const sorted = Object.entries(results).sort((a, b) => {
@@ -152,7 +162,7 @@
       rankingTable.innerHTML = '';
       sorted.forEach(([team, data]) => {
         const row = document.createElement('tr');
-        row.innerHTML = `<td>${team}</td><td>${data.wins}</td><td>${data.points}</td>`;
+        row.innerHTML = `<td>${team}</td><td>${data.played}</td><td>${data.wins}</td><td>${data.points}</td>`;
         rankingTable.appendChild(row);
       });
 
